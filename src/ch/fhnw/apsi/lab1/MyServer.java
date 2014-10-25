@@ -1,4 +1,5 @@
 package ch.fhnw.apsi.lab1;
+
 /*
  * Copyright 2013 - 2014 by PostFinance Ltd - All rights reserved
  */
@@ -24,7 +25,7 @@ import com.sun.net.httpserver.HttpServer;
 
 /**
  * TODO
- *
+ * 
  * @author TODO
  */
 public class MyServer implements HttpHandler {
@@ -37,7 +38,7 @@ public class MyServer implements HttpHandler {
 
   public static void main(String[] args) throws IOException {
     HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
-    server.createContext("/test", new MyServer());
+    server.createContext("/lab1", new MyServer());
     server.setExecutor(null); // creates a default executor
     server.start();
   }
@@ -86,8 +87,8 @@ public class MyServer implements HttpHandler {
   }
 
   public void writeResponse(String file, HttpExchange ex) throws Exception {
-    BufferedReader br = new BufferedReader(new FileReader(
-      new File(getClass().getClassLoader().getResource(file).getFile())));
+    BufferedReader br = new BufferedReader(new FileReader(new File(getClass().getClassLoader().getResource(file)
+        .getFile())));
     StringBuilder sb = new StringBuilder();
     while (br.ready()) {
       sb.append(br.readLine());
@@ -114,13 +115,25 @@ public class MyServer implements HttpHandler {
   }
 
   public Map<String, String> parseRequestParams(HttpExchange ex) throws IOException {
+    Map<String, String> params = new HashMap<>();
+    System.out.println("------ Params parsed -----");
+    // Get params
+    String query = ex.getRequestURI().getQuery();
+    if (query.length() > 0) {
+      for (String cookieString : query.split("&")) {
+        String[] c = cookieString.trim().split("=");
+        params.put(c[0], c[1]);
+        System.out.println(c[0] + ": " + c[1]);
+      }
+    }
+    
+    // Post params
     BufferedReader br = new BufferedReader(new InputStreamReader(ex.getRequestBody()));
     StringBuilder sb = new StringBuilder();
     while (br.ready()) {
       sb.append(br.readLine());
     }
     String body = sb.toString();
-    Map<String, String> params = new HashMap<>();
     if (body.length() > 0) {
       System.out.println("------ Params parsed -----");
       for (String cookieString : body.split("&")) {
