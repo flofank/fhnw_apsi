@@ -38,7 +38,7 @@ public class MyServer implements HttpHandler {
   private static final String SHA_SALT = "oeschgerfankhauserapsilab1";
 
   static {
-    USERS.put("test@test.com", "1234");
+    USERS.put("test%40test.com", "1234");
   }
 
   public static void main(String[] args) throws IOException {
@@ -75,7 +75,8 @@ public class MyServer implements HttpHandler {
           return true;
         }
       }
-    } catch (Exception e) {}
+    } catch (Exception e) {
+    }
     return false;
   }
   
@@ -143,6 +144,7 @@ public class MyServer implements HttpHandler {
     MessageDigest md = MessageDigest.getInstance("SHA-1");
     md.update(Long.toString(time).getBytes());
     md.update(data.getBytes());
+    md.update(SHA_SALT.getBytes());
     return DatatypeConverter.printHexBinary(md.digest());
   }
   
@@ -168,8 +170,8 @@ public class MyServer implements HttpHandler {
   private Map<String, String> extractKeyValues(String raw) {
     Map<String, String> keyValues = new HashMap<>();
     if (raw != null && raw.length() > 0) {
-      for (String cookieString : raw.split("&")) {
-        String[] c = cookieString.trim().split("=");
+      for (String keyValue : raw.split("&")) {
+        String[] c = keyValue.trim().split("=");
         keyValues.put(c[0], c[1]);
       }
     }
