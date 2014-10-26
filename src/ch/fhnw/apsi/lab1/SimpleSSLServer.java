@@ -66,6 +66,9 @@ public class SimpleSSLServer implements HttpHandler {
   }
 
   public void startServer() throws IOException {
+    // initialize SSL context with a self-singed server certificate (stored in resources/Server.keyStore)
+    // server listens to https://localhost:8000/lab1
+    
     server = HttpsServer.create(new InetSocketAddress(8000), 0);
     
     try {
@@ -107,6 +110,11 @@ public class SimpleSSLServer implements HttpHandler {
   }
 
   public void handle(HttpExchange ex) throws IOException {
+    // handle client requests
+    // - show login form if client can't authenticate with a valid cookie
+    // - send secret information if login successful and send client a cookie for subsequent requests
+    // - send secret information if client authenticates with valid cookie
+    
     try {
 //      debugHttpExchange(ex);
 //      debugHeaders(ex);
@@ -130,6 +138,8 @@ public class SimpleSSLServer implements HttpHandler {
   }
 
   private boolean login(HttpExchange ex, Map<String, String> params) throws NoSuchAlgorithmException {
+    // check login credentials retrieved from client 
+    
     try {
       if (params.containsKey("mail") && params.containsKey("password")) {
         if (USERS.get(params.get("mail")).equals(params.get("password"))) {
@@ -143,6 +153,8 @@ public class SimpleSSLServer implements HttpHandler {
   }
   
   private Map<String, String> parseCookies(HttpExchange ex) {
+    // extract cookies from the request header 
+    
     Map<String, String> cookies = new HashMap<>();
     if (ex.getRequestHeaders().containsKey("Cookie")) {      
       String cookiesString = (String) ((LinkedList) ex.getRequestHeaders().get("Cookie")).getFirst();
@@ -157,6 +169,11 @@ public class SimpleSSLServer implements HttpHandler {
   }
 
   private boolean validateCookie(Map<String, String> cookies) {
+    // validate cookie retrieved from client
+    // - check that all necessary parts are there
+    // - check integrity of cookie by comparing the MAC
+    // - check if cookie has expired
+    
     try {
       if (cookies.containsKey("session")) {
         String session = cookies.get("session");
@@ -179,11 +196,11 @@ public class SimpleSSLServer implements HttpHandler {
   }
 
   private Map<String, String> parseRequestParams(HttpExchange ex) throws IOException {
+    // extract the parameters of the client request (e.g. login credentials sent in post request)  
+    
     Map<String, String> params = new HashMap<>();
-    // Get params
     String query = ex.getRequestURI().getQuery();
     params.putAll(extractKeyValues(query));
-    // Post params
     BufferedReader br = new BufferedReader(new InputStreamReader(ex.getRequestBody()));
     StringBuilder sb = new StringBuilder();
     String line;
@@ -196,6 +213,8 @@ public class SimpleSSLServer implements HttpHandler {
   }
   
   private String createCookie(HttpExchange ex) throws NoSuchAlgorithmException, InvalidKeyException {
+    // create a cookie that the client can use in subsequent requests to authenticate
+    
     StringBuilder sb = new StringBuilder();
     sb.append("session=exp=");
     long time = System.currentTimeMillis() / 1000 + COOKIE_VALID_TIME; // Seconds since 1970 + valid time
@@ -212,6 +231,7 @@ public class SimpleSSLServer implements HttpHandler {
   }
   
   private String calculateDigest(long time, String data) throws NoSuchAlgorithmException, InvalidKeyException {
+    // calculate MAC of the cookie content to prove its integrity
 
     Mac mac = Mac.getInstance("HmacSHA256");
     mac.init(secretKey);
@@ -223,6 +243,8 @@ public class SimpleSSLServer implements HttpHandler {
   }
   
   private void writeResponse(String file, HttpExchange ex) throws Exception {
+    // write response for the client request
+    
     BufferedReader br = new BufferedReader(new FileReader(new File(getClass().getClassLoader().getResource(file)
         .getFile())));
     StringBuilder sb = new StringBuilder();
@@ -242,6 +264,8 @@ public class SimpleSSLServer implements HttpHandler {
    * @return
    */
   private Map<String, String> extractKeyValues(String raw) {
+    // helper function for parsing cookie / request parameters
+    
     Map<String, String> keyValues = new HashMap<>();
     if (raw != null && raw.length() > 0) {
       for (String keyValue : raw.split("&")) {
