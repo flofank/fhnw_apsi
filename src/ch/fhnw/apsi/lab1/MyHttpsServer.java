@@ -11,6 +11,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
+import java.security.InvalidKeyException;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -25,6 +26,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.crypto.KeyGenerator;
+import javax.crypto.Mac;
+import javax.crypto.SecretKey;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
@@ -49,6 +53,8 @@ public class MyHttpsServer implements HttpHandler {
   private static final Map<String, String> USERS = new HashMap<>();
   private static final long COOKIE_VALID_TIME = 600; // 5 Minutes
   private static final String SHA_SALT = "oeschgerfankhauserapsilab1";
+  private static KeyGenerator keyGenerator;
+  private static SecretKey secretKey;
 
   static {
     USERS.put("test%40test.com", "1234");
@@ -73,6 +79,9 @@ public class MyHttpsServer implements HttpHandler {
       sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
       
       server.setHttpsConfigurator(new HttpsConfigurator(sslContext));
+      
+      keyGenerator = KeyGenerator.getInstance("HmacSHA256");
+      secretKey = keyGenerator.generateKey();
     } catch (KeyStoreException e) {
       System.out.println("KeyStoreException");
     } catch (NoSuchAlgorithmException e) {
@@ -182,7 +191,7 @@ public class MyHttpsServer implements HttpHandler {
     return params;
   }
   
-  private String createCookie(HttpExchange ex) throws NoSuchAlgorithmException {
+  private String createCookie(HttpExchange ex) throws NoSuchAlgorithmException, InvalidKeyException {
     StringBuilder sb = new StringBuilder();
     sb.append("session=exp=");
     long time = System.currentTimeMillis() / 1000 + COOKIE_VALID_TIME; // Seconds since 1970 + valid time
@@ -198,12 +207,15 @@ public class MyHttpsServer implements HttpHandler {
     return sb.toString();
   }
   
-  private String calculateDigest(long time, String data) throws NoSuchAlgorithmException {
-    MessageDigest md = MessageDigest.getInstance("SHA-1");
-    md.update(Long.toString(time).getBytes());
-    md.update(data.getBytes());
-    md.update(SHA_SALT.getBytes());
-    return DatatypeConverter.printHexBinary(md.digest());
+  private String calculateDigest(long time, String data) throws NoSuchAlgorithmException, InvalidKeyException {
+    
+    Mac mac = Mac.getInstance("HmacSHA256");
+    mac.init(secretKey);
+    mac.update(Long.toString(time).getBytes());
+    mac.update(data.getBytes());
+    mac.update(SHA_SALT.getBytes());
+    return DatatypeConverter.printHexBinary(mac.doFinal());
+    
   }
   
   private void writeResponse(String file, HttpExchange ex) throws Exception {

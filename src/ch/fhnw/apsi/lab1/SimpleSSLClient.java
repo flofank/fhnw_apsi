@@ -29,15 +29,15 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 
-public class Client {
+public class SimpleSSLClient {
   
   private SSLSocketFactory sslSocketFactory;
   private URL url;
   private String cookie;
   
-  private static final Logger LOGGER = Logger.getLogger(Client.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(SimpleSSLClient.class.getName());
 
-  public Client() {
+  public SimpleSSLClient() {
     
   }
   

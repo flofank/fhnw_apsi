@@ -11,6 +11,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
+import java.security.InvalidKeyException;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -27,6 +28,9 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.crypto.KeyGenerator;
+import javax.crypto.Mac;
+import javax.crypto.SecretKey;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
@@ -47,11 +51,13 @@ import com.sun.net.httpserver.HttpsServer;
  * 
  * @author TODO
  */
-public class LocalHttpsServer implements HttpHandler {
+public class SimpleSSLServer implements HttpHandler {
   private static final Map<String, String> USERS = new HashMap<>();
   private static final long COOKIE_VALID_TIME = 600; // 5 Minutes
   private static final String SHA_SALT = "oeschgerfankhauserapsilab1";
-  private static final Logger LOGGER = Logger.getLogger(LocalHttpsServer.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(SimpleSSLServer.class.getName());
+  private static KeyGenerator keyGenerator;
+  private static SecretKey secretKey;
   private HttpsServer server;
 
   static {
@@ -77,6 +83,9 @@ public class LocalHttpsServer implements HttpHandler {
       sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
       
       server.setHttpsConfigurator(new HttpsConfigurator(sslContext));
+      
+      keyGenerator = KeyGenerator.getInstance("HmacSHA256");
+      secretKey = keyGenerator.generateKey();
     } catch (KeyStoreException e) {
       LOGGER.log(Level.SEVERE,"KeyStoreException");
     } catch (NoSuchAlgorithmException e) {
@@ -89,7 +98,7 @@ public class LocalHttpsServer implements HttpHandler {
       LOGGER.log(Level.SEVERE,"KeyManagementException");
     }
     
-    server.createContext("/lab1", new LocalHttpsServer());
+    server.createContext("/lab1", new SimpleSSLServer());
     server.setExecutor(null); // creates a default executor
     
     LOGGER.log(Level.INFO,"Https Server initialized");
@@ -189,7 +198,7 @@ public class LocalHttpsServer implements HttpHandler {
     return params;
   }
   
-  private String createCookie(HttpExchange ex) throws NoSuchAlgorithmException {
+  private String createCookie(HttpExchange ex) throws NoSuchAlgorithmException, InvalidKeyException {
     StringBuilder sb = new StringBuilder();
     sb.append("session=exp=");
     long time = System.currentTimeMillis() / 1000 + COOKIE_VALID_TIME; // Seconds since 1970 + valid time
@@ -205,12 +214,15 @@ public class LocalHttpsServer implements HttpHandler {
     return sb.toString();
   }
   
-  private String calculateDigest(long time, String data) throws NoSuchAlgorithmException {
-    MessageDigest md = MessageDigest.getInstance("SHA-1");
-    md.update(Long.toString(time).getBytes());
-    md.update(data.getBytes());
-    md.update(SHA_SALT.getBytes());
-    return DatatypeConverter.printHexBinary(md.digest());
+  private String calculateDigest(long time, String data) throws NoSuchAlgorithmException, InvalidKeyException {
+
+    Mac mac = Mac.getInstance("HmacSHA256");
+    mac.init(secretKey);
+    mac.update(Long.toString(time).getBytes());
+    mac.update(data.getBytes());
+    mac.update(SHA_SALT.getBytes());
+    return DatatypeConverter.printHexBinary(mac.doFinal());
+    
   }
   
   private void writeResponse(String file, HttpExchange ex) throws Exception {
@@ -254,26 +266,26 @@ public class LocalHttpsServer implements HttpHandler {
 //  }
 //}
   
-  private void debugHttpExchange(HttpExchange ex) throws IOException {
-    System.out.println("HttpExchange");
-    System.out.println("============");
-    System.out.println("Header:");
-    for (Entry<String, List<String>> list : ex.getRequestHeaders().entrySet()) {
-      for (String s : list.getValue()) {
-        System.out.println("\t"+s);
-      }
-    }
-    System.out.println("Body:");
-    BufferedReader rd = new BufferedReader(new InputStreamReader(ex.getRequestBody()));
-    String line;
-    while((line = rd.readLine()) != null) {
-      System.out.println("\t"+line);
-    }
-    System.out.println("Method:");
-    System.out.println("\t"+ex.getRequestMethod().toString());
-    System.out.println("URI:");
-    System.out.println("\t"+ex.getRequestURI().toString());
-    System.out.println("Query:");
-    System.out.println("\t"+ex.getRequestURI().getQuery());
-  }
+//  private void debugHttpExchange(HttpExchange ex) throws IOException {
+//    System.out.println("HttpExchange");
+//    System.out.println("============");
+//    System.out.println("Header:");
+//    for (Entry<String, List<String>> list : ex.getRequestHeaders().entrySet()) {
+//      for (String s : list.getValue()) {
+//        System.out.println("\t"+s);
+//      }
+//    }
+//    System.out.println("Body:");
+//    BufferedReader rd = new BufferedReader(new InputStreamReader(ex.getRequestBody()));
+//    String line;
+//    while((line = rd.readLine()) != null) {
+//      System.out.println("\t"+line);
+//    }
+//    System.out.println("Method:");
+//    System.out.println("\t"+ex.getRequestMethod().toString());
+//    System.out.println("URI:");
+//    System.out.println("\t"+ex.getRequestURI().toString());
+//    System.out.println("Query:");
+//    System.out.println("\t"+ex.getRequestURI().getQuery());
+//  }
 }

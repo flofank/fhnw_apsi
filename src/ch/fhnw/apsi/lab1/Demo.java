@@ -11,7 +11,7 @@ public class Demo {
   public static void main(String[] args) {
     // TODO Auto-generated method stub
 
-    LocalHttpsServer server = new LocalHttpsServer();
+    SimpleSSLServer server = new SimpleSSLServer();
     try {
       server.startServer();
     } catch (IOException e) {
@@ -19,7 +19,7 @@ public class Demo {
       e.printStackTrace();
     }
     
-    Client client = new Client();
+    SimpleSSLClient client = new SimpleSSLClient();
     try {
       client.setUpConnection();
     } catch (KeyManagementException | KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
