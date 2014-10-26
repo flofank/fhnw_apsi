@@ -56,8 +56,8 @@ public class EvilClient {
       newCookie = newCookie + "&" + cookieParts[i];
     }
     LOGGER.log(Level.INFO, "Tampering expired cooke:");
-    LOGGER.log(Level.INFO, "expired cooke: "+expiredCookie);
-    LOGGER.log(Level.INFO, "new fake cooke: "+newCookie);
+    LOGGER.log(Level.INFO, "expired cookie: "+expiredCookie);
+    LOGGER.log(Level.INFO, "new fake cookie: "+newCookie);
     
     cookie = newCookie;
   }

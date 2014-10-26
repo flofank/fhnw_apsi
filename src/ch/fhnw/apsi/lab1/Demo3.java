@@ -28,6 +28,7 @@ public class Demo3 {
     client.tamperExpiredCookie(expiredCookie);
 
     // Step 4: let evil client try to get the secret information using the tampered cookie as the authenticator
+    // Integrity test of cookie will fail and server will send the login form but not the secret information.
     String attackResponse = client.tryToSnatchSecretInformation();
     System.out.println(attackResponse);
      
