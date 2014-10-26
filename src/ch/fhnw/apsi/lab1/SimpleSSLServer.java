@@ -51,7 +51,7 @@ import com.sun.net.httpserver.HttpsServer;
  */
 public class SimpleSSLServer implements HttpHandler {
   private static final Map<String, String> USERS = new HashMap<>();
-  private static final long COOKIE_VALID_TIME = 600; // 5 Minutes
+  private static final long COOKIE_VALID_TIME = 300; // 5 Minutes
   private static final String SHA_SALT = "oeschgerfankhauserapsilab1";
   private static final Logger LOGGER = Logger.getLogger(SimpleSSLServer.class.getName());
   private static KeyGenerator keyGenerator;
