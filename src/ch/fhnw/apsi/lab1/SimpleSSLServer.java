@@ -15,7 +15,6 @@ import java.security.InvalidKeyException;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
@@ -42,7 +41,6 @@ import com.sun.net.httpserver.HttpHandler;
 /*
  * Copyright 2013 - 2014 by PostFinance Ltd - All rights reserved
  */
-import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpsConfigurator;
 import com.sun.net.httpserver.HttpsServer;
 

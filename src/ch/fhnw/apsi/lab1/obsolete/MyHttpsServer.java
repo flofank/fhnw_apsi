@@ -1,4 +1,4 @@
-package ch.fhnw.apsi.lab1;
+package ch.fhnw.apsi.lab1.obsolete;
 
 /*
  * Copyright 2013 - 2014 by PostFinance Ltd - All rights reserved
