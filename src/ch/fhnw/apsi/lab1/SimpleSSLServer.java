@@ -186,9 +186,6 @@ public class SimpleSSLServer implements HttpHandler {
     // Post params
     BufferedReader br = new BufferedReader(new InputStreamReader(ex.getRequestBody()));
     StringBuilder sb = new StringBuilder();
-//    while (br.ready()) {
-//      sb.append(br.readLine());
-//    }
     String line;
     while((line = br.readLine()) != null) {
       sb.append(line);

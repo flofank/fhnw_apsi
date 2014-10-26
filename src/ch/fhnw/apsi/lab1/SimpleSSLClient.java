@@ -6,10 +6,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.URL;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
@@ -25,7 +22,6 @@ import java.util.logging.Logger;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 
@@ -37,14 +33,11 @@ public class SimpleSSLClient {
   
   private static final Logger LOGGER = Logger.getLogger(SimpleSSLClient.class.getName());
 
-  public SimpleSSLClient() {
-    
-  }
   
   public void setUpConnection() throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException, KeyManagementException {
+    // set SSL context of the connection and trust the self-signed certificate of the server
+    
     url = new URL("https://localhost:8000/lab1");
-//    HttpURLConnection httpConnection = (HttpURLConnection) url.openConnection();
-//    securedConnection = (HttpsURLConnection) httpConnection;
     
     char[] passphrase = "mypassphrase".toCharArray();
     KeyStore ks = KeyStore.getInstance("JKS");
@@ -57,10 +50,11 @@ public class SimpleSSLClient {
     sslContext.init(null, tmf.getTrustManagers(), null);
     
     sslSocketFactory = sslContext.getSocketFactory();
-//    securedConnection.setSSLSocketFactory(sslFactory);
   }
   
   public String post(String input) throws IOException {
+    // post login credentials: mail address and password
+    // retrieve and store (in-memory) the cookie sent from the server for subsequent requests
     
     HttpURLConnection httpConnection = (HttpURLConnection) url.openConnection();
     HttpsURLConnection securedConnection = (HttpsURLConnection) httpConnection;
@@ -103,12 +97,14 @@ public class SimpleSSLClient {
       response.append("\n");
     }
     br.close();
-//    connection.disconnect();
+    securedConnection.disconnect();
     
     return response.toString();
   }
   
   public String get() throws IOException {
+    // get the secret information
+    // authentication is achieved by showing the cookie retrieved from the server
     
     HttpURLConnection httpConnection = (HttpURLConnection) url.openConnection();
     HttpsURLConnection securedConnection = (HttpsURLConnection) httpConnection;
@@ -120,6 +116,8 @@ public class SimpleSSLClient {
     securedConnection.setDoInput(true);
     securedConnection.setDoOutput(true);
     securedConnection.connect();
+    
+    LOGGER.log(Level.INFO, "Sent Cookie: " + cookie);
     
     if (!checkCertificateValidity(securedConnection)) {
       securedConnection.disconnect();
@@ -141,6 +139,9 @@ public class SimpleSSLClient {
   }
   
   private boolean checkCertificateValidity(HttpsURLConnection securedConnection) throws IOException {
+    // check validity of the server certificate
+    // make sure that the self-signed server certificate has not expired yet
+    // (matching address is being checked in the handshake automatically)
     
     java.security.cert.Certificate[] certificates = securedConnection.getServerCertificates();
 

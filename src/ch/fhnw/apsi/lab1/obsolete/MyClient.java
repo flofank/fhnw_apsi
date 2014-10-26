@@ -1,4 +1,4 @@
-package ch.fhnw.apsi.lab1;
+package ch.fhnw.apsi.lab1.obsolete;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
