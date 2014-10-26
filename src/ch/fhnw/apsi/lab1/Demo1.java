@@ -16,7 +16,7 @@ public class Demo1 {
   private static final Logger LOGGER = Logger.getLogger(Demo1.class.getName());
 
   public static void main(String[] args) throws IOException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
-    // Demonstration that the authentication of the client of a subsequent request works with a cookie
+    // Demonstration that the authentication of the client in a subsequent request works with a cookie
     
     // Step 1: start server
     SimpleSSLServer server = new SimpleSSLServer();

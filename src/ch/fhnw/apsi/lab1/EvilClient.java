@@ -55,7 +55,7 @@ public class EvilClient {
     for (int i=1;i<cookieParts.length;i++) {
       newCookie = newCookie + "&" + cookieParts[i];
     }
-    LOGGER.log(Level.INFO, "Tampering expirde cooke:");
+    LOGGER.log(Level.INFO, "Tampering expired cooke:");
     LOGGER.log(Level.INFO, "expired cooke: "+expiredCookie);
     LOGGER.log(Level.INFO, "new fake cooke: "+newCookie);
     
@@ -63,8 +63,7 @@ public class EvilClient {
   }
   
   public String tryToSnatchSecretInformation() throws IOException {
-    // try to get the secret information by constructing a 
-    // authentication is achieved by showing the cookie retrieved from the server
+    // try to get the secret information with a tampered cookie
     
     HttpURLConnection httpConnection = (HttpURLConnection) url.openConnection();
     HttpsURLConnection securedConnection = (HttpsURLConnection) httpConnection;
