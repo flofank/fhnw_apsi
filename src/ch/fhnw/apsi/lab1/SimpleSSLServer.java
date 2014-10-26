@@ -186,9 +186,13 @@ public class SimpleSSLServer implements HttpHandler {
             LOGGER.log(Level.INFO,"Cookie expired");
             return false;
           }
+        } else {
+          LOGGER.log(Level.INFO, "Cookie integrity check failed");
+          return false;
         }
       }
     } catch (Exception e) {
+      LOGGER.log(Level.SEVERE, "Exception when validating cookie");
     }
     return false;
   }

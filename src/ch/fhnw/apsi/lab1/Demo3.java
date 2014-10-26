@@ -10,33 +10,26 @@ import java.util.logging.Logger;
 
 public class Demo3 {
   
-  private static String mail = "test@test.com";
-  private static String password = "1234";
-  
   private static final Logger LOGGER = Logger.getLogger(Demo3.class.getName());
 
   public static void main(String[] args) throws IOException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
-    // Demonstration that the server discovers if an attacker tries to construct a cookie itself or alter its expiration time
+    // Demonstration that the server discovers if an attacker tries to get the secret information by tampering an expired cookie
     
     // Step 1: start server
     SimpleSSLServer server = new SimpleSSLServer();
     server.startServer();
     
-    // Step 2: initialize client and SSL context
-    SimpleSSLClient client = new SimpleSSLClient();
+    // Step 2: initialize evil client and SSL context
+    EvilClient client = new EvilClient();
     client.setUpConnection();
-
-    // Step 3: post login credentials, retrieve cookie and get the secret information
-    LOGGER.log(Level.INFO, "Authenticate with login credentials");
-    String loginResponse = client.post("mail="+mail+"&password="+password);
-    LOGGER.log(Level.INFO, "Login response:");
-    System.out.println(loginResponse);
     
-    // Step 4: get the secret information using the cookie as the authenticator
-    LOGGER.log(Level.INFO, "Authenticate with retrieved cookie");
-    String cookieResponse = client.get();
-    LOGGER.log(Level.INFO, "Cookie authentication response:");
-    System.out.println(cookieResponse);
+    // Step 3: let evil client tamper an expired cookie
+    String expiredCookie = "session=exp=1414348901&data=dummy&digest=FF6F8F67628B22F39F33634141B3C38A6EF25C3E83A96B87E06DF45262853426 ;HttpOnly;Secure";
+    client.tamperExpiredCookie(expiredCookie);
+
+    // Step 4: let evil client try to get the secret information using the tampered cookie as the authenticator
+    String attackResponse = client.tryToSnatchSecretInformation();
+    System.out.println(attackResponse);
      
     server.stopServer();
   }
