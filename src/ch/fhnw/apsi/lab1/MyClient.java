@@ -39,9 +39,9 @@ public class MyClient {
       HttpURLConnection httpConnection = (HttpURLConnection) url.openConnection();
       HttpsURLConnection securedConnection = (HttpsURLConnection) httpConnection;
       
-      char[] passphrase = "secure".toCharArray();
+      char[] passphrase = "mypassphrase".toCharArray();
       KeyStore ks = KeyStore.getInstance("JKS");
-      ks.load(new FileInputStream("resources/serverKeyStore"), passphrase);
+      ks.load(new FileInputStream("resources/Server.keystore"), passphrase);
       
       TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
       tmf.init(ks);

@@ -59,9 +59,9 @@ public class MyHttpsServer implements HttpHandler {
     HttpsServer server = HttpsServer.create(new InetSocketAddress(8000), 0);
     
     try {
-      char[] passphrase = "secure".toCharArray();
+      char[] passphrase = "mypassphrase".toCharArray();
       KeyStore ks = KeyStore.getInstance("JKS");
-      ks.load(new FileInputStream("resources/serverKeyStore"), passphrase);
+      ks.load(new FileInputStream("resources/Server.keystore"), passphrase);
   
       KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
       kmf.init(ks, passphrase);

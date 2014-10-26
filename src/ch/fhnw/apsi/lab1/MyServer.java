@@ -101,7 +101,9 @@ public class MyServer implements HttpHandler {
         long time = Long.valueOf(cookieParams.get("exp"));
         String data = cookieParams.get("data");
         if (cookieParams.get("digest").endsWith(calculateDigest(time, data))) {
-          return true;
+          if (time >= System.currentTimeMillis()/1000) {
+            return true;
+          }
         }
       }
     } catch (Exception e) {
