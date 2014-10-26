@@ -24,6 +24,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -45,18 +47,20 @@ import com.sun.net.httpserver.HttpsServer;
  * 
  * @author TODO
  */
-public class MyHttpsServer implements HttpHandler {
+public class LocalHttpsServer implements HttpHandler {
   private static final Map<String, String> USERS = new HashMap<>();
   private static final long COOKIE_VALID_TIME = 600; // 5 Minutes
   private static final String SHA_SALT = "oeschgerfankhauserapsilab1";
+  private static final Logger LOGGER = Logger.getLogger(LocalHttpsServer.class.getName());
+  private HttpsServer server;
 
   static {
     USERS.put("test%40test.com", "1234");
     USERS.put("test@test.com", "1234");
   }
 
-  public static void main(String[] args) throws IOException {
-    HttpsServer server = HttpsServer.create(new InetSocketAddress(8000), 0);
+  public void startServer() throws IOException {
+    server = HttpsServer.create(new InetSocketAddress(8000), 0);
     
     try {
       char[] passphrase = "mypassphrase".toCharArray();
@@ -74,20 +78,22 @@ public class MyHttpsServer implements HttpHandler {
       
       server.setHttpsConfigurator(new HttpsConfigurator(sslContext));
     } catch (KeyStoreException e) {
-      System.out.println("KeyStoreException");
+      LOGGER.log(Level.SEVERE,"KeyStoreException");
     } catch (NoSuchAlgorithmException e) {
-      System.out.println("NoSuchAlgorithmException");
+      LOGGER.log(Level.SEVERE,"NoSuchAlgorithmException");
     } catch (CertificateException e) {
-      System.out.println("CertificateException");
+      LOGGER.log(Level.SEVERE,"CertificateException");
     } catch (UnrecoverableKeyException e) {
-      System.out.println("UnrecoverableKeyException");
+      LOGGER.log(Level.SEVERE,"UnrecoverableKeyException");
     } catch (KeyManagementException e) {
-      System.out.println("KeyManagementException");
+      LOGGER.log(Level.SEVERE,"KeyManagementException");
     }
-    System.out.println("SSL initialized");
     
-    server.createContext("/lab1", new MyHttpsServer());
+    server.createContext("/lab1", new LocalHttpsServer());
     server.setExecutor(null); // creates a default executor
+    
+    LOGGER.log(Level.INFO,"Https Server initialized");
+    
     server.start();
   }
 
@@ -95,17 +101,17 @@ public class MyHttpsServer implements HttpHandler {
     try {
 //      debugHttpExchange(ex);
 //      debugHeaders(ex);
-      Map<String, String> cookies = parseCookies(ex);      
+      Map<String, String> cookies = parseCookies(ex);
       Map<String, String> params = parseRequestParams(ex);
       if (validateCookie(cookies)) {
-        System.out.println("Sending secret.html (cookie)");
+        LOGGER.log(Level.INFO,"Sending secret.html (cookie validated)");
         writeResponse("secret.html", ex);
       } else {
         if (login(ex, params)) {
-          System.out.println("Sending secret.html (login)");
+          LOGGER.log(Level.INFO,"Sending secret.html (login successfull)");
           writeResponse("secret.html", ex);
         } else {
-          System.out.println("Sending form.html");
+          LOGGER.log(Level.INFO,"Sending form.html");
           writeResponse("form.html", ex);
         }
       }
@@ -129,11 +135,13 @@ public class MyHttpsServer implements HttpHandler {
   
   private Map<String, String> parseCookies(HttpExchange ex) {
     Map<String, String> cookies = new HashMap<>();
-    if (ex.getRequestHeaders().containsKey("Cookie")) {
+    if (ex.getRequestHeaders().containsKey("Cookie")) {      
       String cookiesString = (String) ((LinkedList) ex.getRequestHeaders().get("Cookie")).getFirst();
       for (String cookieString : cookiesString.split(";")) {
         String[] c = cookieString.trim().split("=", 2);
-        cookies.put(c[0], c[1]);
+        if (c.length == 2) {
+          cookies.put(c[0], c[1]);
+        }
       }
     }
     return cookies;
@@ -148,11 +156,10 @@ public class MyHttpsServer implements HttpHandler {
         String data = cookieParams.get("data");
         if (cookieParams.get("digest").endsWith(calculateDigest(time, data))) {
           if (time >= System.currentTimeMillis()/1000) {
-            System.out.println("Cookie validated");
-            System.out.println(session);
+            LOGGER.log(Level.INFO,"Cookie validated");
             return true;
           } else {
-            System.out.println("Cookie expired");
+            LOGGER.log(Level.INFO,"Cookie expired");
             return false;
           }
         }
@@ -236,6 +243,10 @@ public class MyHttpsServer implements HttpHandler {
     return keyValues;
   }
   
+  public void stopServer() {
+    server.stop(0);
+  }
+  
 //private void debugHeaders(HttpExchange ex) throws IOException {
 //  System.out.println("###################### Request - " + (new Date()) + " #############################");
 //  for (String s : ex.getRequestHeaders().keySet()) {
@@ -243,26 +254,26 @@ public class MyHttpsServer implements HttpHandler {
 //  }
 //}
   
-//  private void debugHttpExchange(HttpExchange ex) throws IOException {
-//    System.out.println("HttpExchange");
-//    System.out.println("============");
-//    System.out.println("Header:");
-//    for (Entry<String, List<String>> list : ex.getRequestHeaders().entrySet()) {
-//      for (String s : list.getValue()) {
-//        System.out.println("\t"+s);
-//      }
-//    }
-//    System.out.println("Body:");
-//    BufferedReader rd = new BufferedReader(new InputStreamReader(ex.getRequestBody()));
-//    String line;
-//    while((line = rd.readLine()) != null) {
-//      System.out.println("\t"+line);
-//    }
-//    System.out.println("Method:");
-//    System.out.println("\t"+ex.getRequestMethod().toString());
-//    System.out.println("URI:");
-//    System.out.println("\t"+ex.getRequestURI().toString());
-//    System.out.println("Query:");
-//    System.out.println("\t"+ex.getRequestURI().getQuery());
-//  }
+  private void debugHttpExchange(HttpExchange ex) throws IOException {
+    System.out.println("HttpExchange");
+    System.out.println("============");
+    System.out.println("Header:");
+    for (Entry<String, List<String>> list : ex.getRequestHeaders().entrySet()) {
+      for (String s : list.getValue()) {
+        System.out.println("\t"+s);
+      }
+    }
+    System.out.println("Body:");
+    BufferedReader rd = new BufferedReader(new InputStreamReader(ex.getRequestBody()));
+    String line;
+    while((line = rd.readLine()) != null) {
+      System.out.println("\t"+line);
+    }
+    System.out.println("Method:");
+    System.out.println("\t"+ex.getRequestMethod().toString());
+    System.out.println("URI:");
+    System.out.println("\t"+ex.getRequestURI().toString());
+    System.out.println("Query:");
+    System.out.println("\t"+ex.getRequestURI().getQuery());
+  }
 }
