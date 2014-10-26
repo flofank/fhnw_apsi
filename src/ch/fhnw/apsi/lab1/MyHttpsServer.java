@@ -142,7 +142,9 @@ public class MyHttpsServer implements HttpHandler {
       String cookiesString = (String) ((LinkedList) ex.getRequestHeaders().get("Cookie")).getFirst();
       for (String cookieString : cookiesString.split(";")) {
         String[] c = cookieString.trim().split("=", 2);
-        cookies.put(c[0], c[1]);
+        if (c.length == 2) {
+          cookies.put(c[0], c[1]);
+        }
       }
     }
     return cookies;
