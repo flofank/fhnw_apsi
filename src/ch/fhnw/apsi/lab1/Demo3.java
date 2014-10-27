@@ -1,6 +1,7 @@
 package ch.fhnw.apsi.lab1;
 
 import java.io.IOException;
+import java.security.InvalidKeyException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -12,11 +13,11 @@ public class Demo3 {
   
   private static final Logger LOGGER = Logger.getLogger(Demo3.class.getName());
 
-  public static void main(String[] args) throws IOException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
+  public static void main(String[] args) throws IOException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, CertificateException, InvalidKeyException {
     // Demonstration that the server discovers if an attacker tries to get the secret information by tampering an expired cookie
     
     // Step 1: start server
-    SimpleSSLServer server = new SimpleSSLServer();
+    ExpiredCookieServer server = new ExpiredCookieServer();
     server.startServer();
     
     // Step 2: initialize evil client and SSL context
@@ -24,7 +25,7 @@ public class Demo3 {
     client.setUpConnection();
     
     // Step 3: let evil client tamper an expired cookie
-    String expiredCookie = "session=exp=1414348901&data=dummy&digest=FF6F8F67628B22F39F33634141B3C38A6EF25C3E83A96B87E06DF45262853426 ;HttpOnly;Secure";
+    String expiredCookie = server.getExpiredCookie();
     client.tamperExpiredCookie(expiredCookie);
 
     // Step 4: let evil client try to get the secret information using the tampered cookie as the authenticator
