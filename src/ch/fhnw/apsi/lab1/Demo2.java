@@ -30,7 +30,7 @@ public class Demo2 {
     client.setUpConnection();
 
     // Step 3: SSL handshake won't succeed since the server presents a certificate that we don't trust
-    // --> donp't send login credentials!
+    // --> don't send login credentials!
     try {
       String loginResponse = client.post("mail="+mail+"&password="+password);
       LOGGER.log(Level.SEVERE, "Client has sent login credentials to a fake server!!");

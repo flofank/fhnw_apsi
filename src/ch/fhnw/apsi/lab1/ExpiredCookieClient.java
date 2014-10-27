@@ -51,6 +51,12 @@ public class ExpiredCookieClient {
     
     sslSocketFactory = sslContext.getSocketFactory();
   }
+  
+  public void setCookie(String cookie) {
+    // set the cookie that is used later on for the GET request to the server
+    
+    this.cookie = cookie;
+  }
    
   public String get() throws IOException {
     // get the secret information
@@ -113,7 +119,4 @@ public class ExpiredCookieClient {
     return false;
   }
   
-  public void setCookie(String cookie) {
-    this.cookie = cookie;
-  }
 }

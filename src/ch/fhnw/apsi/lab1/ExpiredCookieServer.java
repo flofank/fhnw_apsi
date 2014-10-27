@@ -114,8 +114,6 @@ public class ExpiredCookieServer implements HttpHandler {
     // - send secret information if client authenticates with valid cookie
     
     try {
-//      debugHttpExchange(ex);
-//      debugHeaders(ex);
       Map<String, String> cookies = parseCookies(ex);
       Map<String, String> params = parseRequestParams(ex);
       if (validateCookie(cookies)) {
@@ -283,6 +281,8 @@ public class ExpiredCookieServer implements HttpHandler {
   }
   
   public String getExpiredCookie() throws InvalidKeyException, NoSuchAlgorithmException {
+    // create a cookie that is already expired
+    
     StringBuilder sb = new StringBuilder();
     sb.append("session=exp=");
     long time = System.currentTimeMillis() / 1000 - 100; // Seconds since 1970 - 100 ==> already expired!
@@ -297,34 +297,5 @@ public class ExpiredCookieServer implements HttpHandler {
     sb.append(" ;HttpOnly;Secure");
     return sb.toString();
   }
-  
-//private void debugHeaders(HttpExchange ex) throws IOException {
-//  System.out.println("###################### Request - " + (new Date()) + " #############################");
-//  for (String s : ex.getRequestHeaders().keySet()) {
-//    System.out.println(s + ": " + ex.getRequestHeaders().get(s));
-//  }
-//}
-  
-//  private void debugHttpExchange(HttpExchange ex) throws IOException {
-//    System.out.println("HttpExchange");
-//    System.out.println("============");
-//    System.out.println("Header:");
-//    for (Entry<String, List<String>> list : ex.getRequestHeaders().entrySet()) {
-//      for (String s : list.getValue()) {
-//        System.out.println("\t"+s);
-//      }
-//    }
-//    System.out.println("Body:");
-//    BufferedReader rd = new BufferedReader(new InputStreamReader(ex.getRequestBody()));
-//    String line;
-//    while((line = rd.readLine()) != null) {
-//      System.out.println("\t"+line);
-//    }
-//    System.out.println("Method:");
-//    System.out.println("\t"+ex.getRequestMethod().toString());
-//    System.out.println("URI:");
-//    System.out.println("\t"+ex.getRequestURI().toString());
-//    System.out.println("Query:");
-//    System.out.println("\t"+ex.getRequestURI().getQuery());
-//  }
+
 }
